@@ -1,11 +1,11 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import DeclarativeBase,sessionmaker
+from sqlalchemy.ext.asyncio  import create_async_engine,async_sessionmaker
+from sqlalchemy.orm import DeclarativeBase
 
-DATABASE_URL = "sqlite:///./supportflow.db"
+DATABASE_URL = "sqlite+aiosqlite:///./supportflow.db"
 
-engine = create_engine(DATABASE_URL,connect_args = {"check_same_thread": False})
+engine = create_async_engine(DATABASE_URL)
 
-SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+SessionLocal = async_sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 class Base(DeclarativeBase):
     pass
