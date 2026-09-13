@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app.models.user import User
-from app.models.comment import Comment
+    from app.models.comment import Comment
 
 
 class Ticket(Base):

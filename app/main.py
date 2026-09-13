@@ -1,19 +1,13 @@
-from typing import List
-from fastapi import FastAPI, Depends, HTTPException
-from pydantic import BaseModel
+from fastapi import FastAPI
+from app.database import Base
+from app.database import engine
+from contextlib import asynccontextmanager
+from app.routers.users import router as users_router
+from app.routers.tickets import router as tickets_router
+from app.routers.comments import router as comments_router
 from app.models.user import User
 from app.models.ticket import Ticket
 from app.models.comment import Comment
-from app.database import Base
-from app.models.user import User
-from app.dependencies import get_db
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.database import engine
-from app.schemas.ticket import TicketCreate,TicketUpdate,TicketResponse
-from contextlib import asynccontextmanager
-from sqlalchemy import select
-from sqlalchemy.orm import selectinload
-from app.schemas.comment import CommentCreate, CommentResponse,CommentUpdate
 
 
 # create async database
@@ -34,6 +28,11 @@ app = FastAPI(
     lifespan = database
 )
 
+app.include_router(users_router)
+app.include_router(tickets_router)
+app.include_router(comments_router)
+
+
 
 # welcome
 @app.get("/Welcome")
@@ -41,253 +40,24 @@ def root():
     return{"message" : "Welcome to SupportFlow API"}
 
 
-# create a user and save in database
-@app.post("/users")
-async def create_user(
-    name : str,
-    email : str,
-    db : AsyncSession = Depends(get_db)
-):
-    user = User(name=name, email=email)
-    db.add(user)
-    await db.commit()
-    await db.refresh(user)
 
 
-    return user
 
 
-# read all users
-@app.get("/users")
-async def get_users(db: AsyncSession= Depends(get_db)):
-    result = await db.execute(select(User))
-    users = result.scalars().all()
 
-    return users
 
 
 
-@app.get("/users/{user_id}")
-async def get_user(user_id : int, db: AsyncSession = Depends(get_db)):
-    result = await db.get(User, user_id)
-    if result is None:
-        raise HTTPException(status_code=404, detail="User not found")
 
 
-    return result
 
 
 
 
 
-class UpdateUser(BaseModel):
-    name: str
-    email: str
 
-# update the user's information
-@app.patch("/users/{user_id}")
-async def update_user(
-    user_id : int,
-    new_information : UpdateUser,
-    db : AsyncSession = Depends(get_db)
-):
-    user = await db.get(User, user_id)
-    if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
 
-    user.name = new_information.name
 
-    user.email = new_information.email
 
-    await db.commit()
 
-    await db.refresh(user)
 
-    return user
-
-
-# delete a user by id
-@app.delete("/users/{user_id}")
-async def delete_user(
-    user_id : int,
-    db : AsyncSession = Depends(get_db)
-):
-    user = await db.get(User, user_id)
-    if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    await db.delete(user)
-
-    await db.commit()
-
-    return {"message": "User deleted"}
-
-
-
-# create a ticket
-@app.post("/tickets")
-async def create_ticket(
-        ticket_data : TicketCreate,
-        db : AsyncSession = Depends(get_db)
-):
-    customer = await db.get(User, ticket_data.customer_id)
-    if customer is None:
-        raise HTTPException(status_code=400, detail="Customer id is wrong")
-    ticket = Ticket(
-        title=ticket_data.title,
-        description=ticket_data.description,
-        customer_id=ticket_data.customer_id)
-
-    db.add(ticket)
-    await db.commit()
-    await db.refresh(ticket)
-    return ticket
-
-
-
-
-
-# read all ticket and users info
-@app.get("/tickets",response_model=List[TicketResponse])
-async def get_tickets(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
-        select(Ticket).options(selectinload(Ticket.customer))
-    )
-    tickets = result.scalars().all()
-    return tickets
-
-
-
-# read a specific ticket with user info  by id
-@app.get("/tickets/{ticket_id}",response_model=TicketResponse)
-async def get_ticket(ticket_id : int, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
-        select(Ticket)
-        .where(Ticket.id == ticket_id)
-        .options(selectinload(Ticket.customer))
-    )
-    ticket = result.scalar_one_or_none()
-    if ticket is None:
-        raise HTTPException(status_code=404, detail="Ticket not found")
-
-    return ticket
-
-
-
-#update the ticket's information
-@app.patch("/tickets/{ticket_id}")
-async def update_ticket(
-    ticket_id : int,
-    new_information : TicketUpdate,
-    db : AsyncSession= Depends(get_db)
-):
-    ticket = await db.get(Ticket, ticket_id)
-    if ticket is None:
-        raise HTTPException(status_code=404, detail="Ticket not found")
-
-    ticket.title = new_information.title
-
-    ticket.description = new_information.description
-
-    await db.commit()
-    await db.refresh(ticket)
-
-    return ticket
-
-
-
-
-# delete a ticket by id
-@app.delete("/tickets/{ticket_id}")
-async def delete_ticket(
-        ticket_id : int,
-        db: AsyncSession = Depends(get_db)
-):
-    ticket = await db.get(Ticket, ticket_id)
-    if ticket is None :
-        raise HTTPException(status_code=404, detail="Ticket not found")
-    await db.delete(ticket)
-    await db.commit()
-    return {"message": "Ticket deleted"}
-
-
-
-# creat a comment
-@app.post("/tickets/{ticket_id}/comments",response_model=CommentResponse)
-async def create_comment(ticket_id : int,comment_info : CommentCreate , db : AsyncSession = Depends(get_db)):
-    ticket = await db.get(Ticket, ticket_id)
-    user = await db.get(User,comment_info.author_id)
-    if ticket  is None:
-        raise HTTPException(status_code=404, detail="Ticket not found")
-    if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    comment = Comment(
-        ticket_id=ticket_id,
-        content=comment_info.content,
-        author_id=comment_info.author_id
-    )
-    db.add(comment)
-    await db.commit()
-    await db.refresh(comment)
-
-    return comment
-
-
-
-@app.get("/tickets/{ticket_id}/comments",response_model=List[CommentResponse])
-async def get_comments(ticket_id : int, db : AsyncSession = Depends(get_db)
-    ):
-    ticket = await db.get(Ticket, ticket_id)
-    if ticket is None:
-        raise HTTPException(status_code=404, detail="Ticket not found")
-
-    comments = await db.execute(
-        select(Comment)
-        .where(Comment.ticket_id == ticket_id)
-    )
-    result = comments.scalars().all()
-
-    return result
-
-
-
-# get one comment
-@app.get("/comments/{comment_id}",response_model=CommentResponse)
-async def get_comment(comment_id : int, db : AsyncSession = Depends(get_db)):
-    comment = await db.get(Comment, comment_id)
-    if comment is None:
-        raise HTTPException(status_code=404, detail="Comment not found")
-    return comment
-
-
-
-
-# update comment
-@app.patch("/comments/{comment_id}")
-async def update_comment(comment_id : int,comment_info : CommentUpdate,db : AsyncSession = Depends(get_db)):
-    comment = await db.get(Comment, comment_id)
-    if comment is None:
-        raise HTTPException(status_code=404, detail="Comment not found")
-
-    comment.content = comment_info.content
-
-    await db.commit()
-
-    await db.refresh(comment)
-
-    return comment
-
-
-
-
-# delete comment
-@app.delete("/comments/{comment_id}")
-async def delete_comment(comment_id : int, db : AsyncSession = Depends(get_db)):
-    comment = await db.get(Comment, comment_id)
-    if comment is None:
-        raise HTTPException(status_code=404, detail="Comment not found")
-
-    await db.delete(comment)
-    await db.commit()
-    return {"message": "Comment deleted"}
