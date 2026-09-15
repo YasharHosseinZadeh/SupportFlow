@@ -5,7 +5,7 @@ DATABASE_URL = "sqlite+aiosqlite:///./supportflow.db"
 
 engine = create_async_engine(DATABASE_URL)
 
-SessionLocal = async_sessionmaker(bind=engine, autoflush=False, autocommit=False)
+SessionLocal = async_sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
 class Base(DeclarativeBase):
     pass

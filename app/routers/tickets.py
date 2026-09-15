@@ -1,12 +1,15 @@
 from fastapi import APIRouter,Depends,HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.dependencies import get_db
-from app.models.user import  User
-from app.models.ticket import Ticket
-from sqlalchemy import select
 from app.schemas.ticket import TicketResponse, TicketCreate, TicketUpdate
 from typing import List
-from sqlalchemy.orm import selectinload
+from app.services.ticket_service import (
+    get_all_tickets,
+    get_ticket_by_id,
+    create_ticket as create_ticket_service,
+    delete_ticket as delete_ticket_service,
+    update_ticket as update_ticket_service
+)
 
 router = APIRouter()
 
@@ -19,28 +22,17 @@ async def create_ticket(
         ticket_data : TicketCreate,
         db : AsyncSession = Depends(get_db)
 ):
-    customer = await db.get(User, ticket_data.customer_id)
-    if customer is None:
+    result = await create_ticket_service(db, ticket_data)
+    if result is None:
         raise HTTPException(status_code=400, detail="Customer id is wrong")
-    ticket = Ticket(
-        title=ticket_data.title,
-        description=ticket_data.description,
-        customer_id=ticket_data.customer_id)
 
-    db.add(ticket)
-    await db.commit()
-    await db.refresh(ticket)
-    return ticket
-
+    return result
 
 
 # read all ticket and users info
 @router.get("/tickets",response_model=List[TicketResponse])
 async def get_tickets(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
-        select(Ticket).options(selectinload(Ticket.customer))
-    )
-    tickets = result.scalars().all()
+    tickets = await get_all_tickets(db)
     return tickets
 
 
@@ -48,16 +40,11 @@ async def get_tickets(db: AsyncSession = Depends(get_db)):
 # read a specific ticket with user info  by id
 @router.get("/tickets/{ticket_id}",response_model=TicketResponse)
 async def get_ticket(ticket_id : int, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
-        select(Ticket)
-        .where(Ticket.id == ticket_id)
-        .options(selectinload(Ticket.customer))
-    )
-    ticket = result.scalar_one_or_none()
-    if ticket is None:
+    result = await get_ticket_by_id(db, ticket_id)
+    if result is None:
         raise HTTPException(status_code=404, detail="Ticket not found")
 
-    return ticket
+    return result
 
 
 
@@ -68,16 +55,9 @@ async def update_ticket(
     new_information : TicketUpdate,
     db : AsyncSession= Depends(get_db)
 ):
-    ticket = await db.get(Ticket, ticket_id)
+    ticket = await update_ticket_service(db, ticket_id, new_information)
     if ticket is None:
         raise HTTPException(status_code=404, detail="Ticket not found")
-
-    ticket.title = new_information.title
-
-    ticket.description = new_information.description
-
-    await db.commit()
-    await db.refresh(ticket)
 
     return ticket
 
@@ -90,9 +70,8 @@ async def delete_ticket(
         ticket_id : int,
         db: AsyncSession = Depends(get_db)
 ):
-    ticket = await db.get(Ticket, ticket_id)
+    ticket = await delete_ticket_service(db, ticket_id)
     if ticket is None :
         raise HTTPException(status_code=404, detail="Ticket not found")
-    await db.delete(ticket)
-    await db.commit()
+
     return {"message": "Ticket deleted"}
