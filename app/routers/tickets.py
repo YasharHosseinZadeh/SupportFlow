@@ -1,4 +1,4 @@
-from fastapi import APIRouter,Depends,HTTPException
+from fastapi import APIRouter,Depends,HTTPException,status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.dependencies import get_db
 from app.schemas.ticket import TicketResponse, TicketCreate, TicketUpdate
@@ -65,7 +65,7 @@ async def update_ticket(
 
 
 # delete a ticket by id
-@router.delete("/tickets/{ticket_id}")
+@router.delete("/tickets/{ticket_id}",status_code=status.HTTP_204_NO_CONTENT)
 async def delete_ticket(
         ticket_id : int,
         db: AsyncSession = Depends(get_db)
@@ -74,4 +74,4 @@ async def delete_ticket(
     if ticket is None :
         raise HTTPException(status_code=404, detail="Ticket not found")
 
-    return {"message": "Ticket deleted"}
+    return

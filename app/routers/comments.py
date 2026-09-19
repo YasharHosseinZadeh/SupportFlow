@@ -1,4 +1,4 @@
-from fastapi import APIRouter,Depends,HTTPException
+from fastapi import APIRouter,Depends,HTTPException,status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.dependencies import get_db
 from app.schemas.comment import CommentUpdate, CommentResponse, CommentCreate
@@ -68,10 +68,10 @@ async def update_comment(comment_id : int,comment_info : CommentUpdate,db : Asyn
 
 
 # delete comment
-@router.delete("/comments/{comment_id}")
+@router.delete("/comments/{comment_id}",status_code=status.HTTP_204_NO_CONTENT)
 async def delete_comment(comment_id : int, db : AsyncSession = Depends(get_db)):
     comment = await delete_comment_service(db, comment_id)
     if comment is None:
         raise HTTPException(status_code=404, detail="Comment not found")
 
-    return {"message": "Comment deleted"}
+    return
