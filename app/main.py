@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from app.routers.users import router as users_router
 from app.routers.tickets import router as tickets_router
 from app.routers.comments import router as comments_router
+from app.routers.analytics import router as analytics_router
 from app.models.user import User
 from app.models.ticket import Ticket
 from app.models.comment import Comment
@@ -31,7 +32,7 @@ app = FastAPI(
 app.include_router(users_router)
 app.include_router(tickets_router)
 app.include_router(comments_router)
-
+app.include_router(analytics_router)
 
 
 # welcome

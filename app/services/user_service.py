@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import User
 from sqlalchemy import select
-from app.schemas.user import UpdateUser
+from app.schemas.user import UpdateUser, RoleUpdate
 from app.core.security import hash_password
 
 
@@ -42,4 +42,22 @@ async def delete_user(db: AsyncSession, user_id: int):
         return None
     await db.delete(user)
     await db.commit()
+    return user
+
+
+
+async def update_user_role(
+        db: AsyncSession,
+        user_id: int,
+        role_info:RoleUpdate
+):
+    user = await db.get(User, user_id)
+    if user is None:
+        return None
+
+    user.role = role_info.role
+
+    await db.commit()
+    await db.refresh(user)
+
     return user

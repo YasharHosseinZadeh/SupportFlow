@@ -5,14 +5,15 @@ from app.core.security import verify_password,create_access_token
 from fastapi import APIRouter,Depends,HTTPException,status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.dependencies import get_db, get_current_user, require_role
-from app.schemas.user import UpdateUser,UserResponse,UserLogin
+from app.schemas.user import UpdateUser, UserResponse, UserLogin, RoleUpdate
 
 from app.services.user_service import (
     get_all_users,
     get_user_by_id,
     create_user as create_user_service,
     update_user as update_user_service,
-    delete_user as delete_user_service
+    delete_user as delete_user_service,
+    update_user_role
     )
 
 router = APIRouter()
@@ -35,9 +36,7 @@ async def get_users(
         current_user = Depends(require_role("manager"))
 ):
 
-    return current_user
-    # result = await get_all_users(db)
-    # return result
+    return await get_all_users(db)
 
 
 
@@ -96,3 +95,18 @@ async def login(user_info : UserLogin,db: AsyncSession = Depends(get_db)):
     token = create_access_token(user.id)
 
     return token
+
+
+# update role
+@router.patch("/users/{user_id}/role",response_model=UserResponse)
+async def update_role(
+        role_info: RoleUpdate,
+        user_id : int,
+        db : AsyncSession = Depends(get_db),
+        role_author = Depends(require_role("manager"))
+):
+    user = await update_user_role(db, user_id, role_info)
+
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user

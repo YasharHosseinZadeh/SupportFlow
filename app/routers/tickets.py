@@ -1,4 +1,4 @@
-from fastapi import APIRouter,Depends,HTTPException,status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.dependencies import get_db
 from app.schemas.ticket import TicketResponse, TicketCreate, TicketUpdate
@@ -8,7 +8,8 @@ from app.services.ticket_service import (
     get_ticket_by_id,
     create_ticket as create_ticket_service,
     delete_ticket as delete_ticket_service,
-    update_ticket as update_ticket_service
+    update_ticket as update_ticket_service,
+    get_tickets_counts_by_customer
 )
 
 router = APIRouter()
@@ -31,8 +32,13 @@ async def create_ticket(
 
 # read all ticket and users info
 @router.get("/tickets",response_model=List[TicketResponse])
-async def get_tickets(db: AsyncSession = Depends(get_db)):
-    tickets = await get_all_tickets(db)
+async def get_tickets(
+        db: AsyncSession = Depends(get_db),
+        customer_id : int | None = None,
+        page : int = Query(1, ge=1),
+        limit : int  = Query(10, ge=1),
+):
+    tickets = await get_all_tickets(db,customer_id,page,limit)
     return tickets
 
 
@@ -45,7 +51,6 @@ async def get_ticket(ticket_id : int, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Ticket not found")
 
     return result
-
 
 
 #update the ticket's information

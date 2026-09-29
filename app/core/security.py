@@ -3,7 +3,7 @@ import jwt
 from datetime import datetime, timedelta,timezone
 
 password_hash = PasswordHash.recommended()
-SECRET_KEY = "your_secret_key"
+SECRET_KEY = "Azxderftghit_15789643_EDRhetishloop"
 
 def hash_password(password: str):
     return password_hash.hash(password)
