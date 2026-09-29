@@ -1,12 +1,12 @@
 import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import create_async_engine,async_sessionmaker
-from app.database import Base
-from app.dependencies import get_db
-from app.main import app
-from app.models.user import User
-from app.models.ticket import Ticket
-from app.core.security import hash_password
+from database import Base
+from dependencies import get_db
+from main import app
+from models.user import User
+from models.ticket import Ticket
+from core.security import hash_password
 
 TEST_DATABASE_URL = "sqlite+aiosqlite:///./test_supportflow.db"
 
