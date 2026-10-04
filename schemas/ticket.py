@@ -36,6 +36,6 @@ class TicketResponse(BaseModel):
     title: str
     description: str
     customer_id: int
-
+    status: str
     # customer must be same name as customer in Ticket table and in User table (back_populates = "customer")
     customer : CustomerResponse

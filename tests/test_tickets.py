@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 from main import app
-
+from core.security import create_access_token
 client = TestClient(app)
 
 
@@ -40,6 +40,19 @@ def test_create_ticket_wrong_customer():
 
     assert response.status_code == 400
     assert response.json() == {"detail" : "Customer id is wrong"}
+
+
+def test_create_ticket_invalid_status(test_user):
+    response = client.post(
+        "/tickets",
+            json={
+                "title": "Test Ticket",
+                "description": "This is a test ticket",
+                "customer_id": test_user.id,
+                "status": "banana"
+            }
+    )
+    assert response.status_code == 422
 
 
 
@@ -157,6 +170,7 @@ def test_get_ticket_by_id(test_user):
     data = response.json()
     assert response.status_code == 200
     assert data["id"] == ticket_id
+    assert data["status"] == "open"
     assert data["title"] == "Test Ticket"
     assert data["description"] == "This is a test ticket"
     assert data["customer_id"] == test_user.id
@@ -213,6 +227,80 @@ def test_update_ticket_not_found():
             "title": "New Title",
             "description": "New description"
         }
+    )
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Ticket not found"}
+
+
+def test_customer_cannot_update_status(test_user,test_ticket):
+    token = create_access_token(test_user.id)
+    headers = {"Authorization": f"Bearer {token}"}
+    response = client.patch(
+        f"/tickets/{test_ticket.id}/status",headers= headers,
+        json={
+            "status": "open"
+        }
+    )
+    assert response.status_code == 403
+    assert response.json() == {"detail": "Incorrect role"}
+
+
+def test_agent_can_update_status(test_user,agent_user,test_ticket):
+    token = create_access_token(agent_user.id)
+    headers = {"Authorization": f"Bearer {token}"}
+    response = client.patch(
+        f"/tickets/{test_ticket.id}/status",headers= headers,
+        json={
+            "status": "open"
+        }
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "open"
+    assert data["id"] == test_ticket.id
+    assert data["title"] == test_ticket.title
+    assert data["description"] == test_ticket.description
+    assert data["customer_id"] == test_user.id
+    assert data["customer"] == {
+        "id" : test_user.id,
+        "name" : test_user.name,
+        "email" : test_user.email
+    }
+
+
+def test_manager_can_update_status(test_user,test_manager,test_ticket):
+    token = create_access_token(test_manager.id)
+    headers = {"Authorization": f"Bearer {token}"}
+    response = client.patch(
+        f"/tickets/{test_ticket.id}/status", headers= headers,
+        json={
+            "status": "closed"
+        }
+
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "closed"
+    assert data["id"] == test_ticket.id
+    assert data["title"] == test_ticket.title
+    assert data["description"] == test_ticket.description
+    assert data["customer_id"] == test_user.id
+    assert data["customer"] == {
+        "id" : test_user.id,
+        "name" : test_user.name,
+        "email" : test_user.email
+    }
+
+
+def test_update_status_ticket_not_found(test_manager,test_user):
+    token = create_access_token(test_manager.id)
+    headers = {"Authorization": f"Bearer {token}"}
+    response = client.patch(
+        "/tickets/999/status", headers= headers,
+        json={
+            "status": "closed"
+        }
+
     )
     assert response.status_code == 404
     assert response.json() == {"detail": "Ticket not found"}

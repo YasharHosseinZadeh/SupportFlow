@@ -114,3 +114,18 @@ async def login_user():
         await session.commit()
         await session.refresh(user)
         return user
+
+
+@pytest_asyncio.fixture
+async def agent_user():
+    async with TestSessionLocal() as session:
+        user = User(
+            name="TestAgent",
+            email="testagent@example.com",
+            password_hash = hash_password("testagent1234"),
+            role = "agent"
+        )
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+        return user
