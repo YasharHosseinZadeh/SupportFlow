@@ -80,7 +80,10 @@ async def delete_user(
 
 # Login endpoint
 @router.post("/login")
-async def login(user_info : UserLogin,db: AsyncSession = Depends(get_db)):
+async def login(
+        user_info : UserLogin,
+        db: AsyncSession = Depends(get_db)
+):
     result = await db.execute(select(User).where(User.email == user_info.email))
     user = result.scalar_one_or_none()
 

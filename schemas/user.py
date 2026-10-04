@@ -1,5 +1,5 @@
 from pydantic import  BaseModel,ConfigDict
-
+from typing import Literal
 
 
 
@@ -22,4 +22,4 @@ class UserLogin(BaseModel):
     password: str
 
 class RoleUpdate(BaseModel):
-    role: str
+    role: Literal["customer","agent","manager"]

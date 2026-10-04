@@ -154,6 +154,17 @@ def test_login_wrong_email(login_user):
     assert response.json() == {"detail": "Incorrect email or password"}
 
 
+def test_login_nonexistent_email():
+    response = client.post(
+        "/login",
+        json={
+            "email" : "doesnotexist@example.com",
+            "password" : "Test1234"
+        }
+    )
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Incorrect email or password"}
+
 def test_login_missing_fields():
     response = client.post(
         "/login",
@@ -218,3 +229,16 @@ def test_update_role_user_without_token():
     assert response.status_code == 401
     assert response.json() == {"detail": "Not authenticated"}
 
+
+def test_update_invalid_role(test_manager):
+    token = create_access_token(test_manager.id)
+
+    response = client.patch(
+        f"/users/{test_manager.id}/role",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "role": "banana"
+        }
+    )
+
+    assert response.status_code == 422
