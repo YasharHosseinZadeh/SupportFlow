@@ -1,10 +1,11 @@
 from pydantic import BaseModel,ConfigDict
-
+from typing import Literal
 
 class TicketCreate(BaseModel):
     title: str
     description: str
     customer_id: int
+    status : Literal["open","in_progress","closed"] = "open"
 
 
 
@@ -12,6 +13,9 @@ class TicketUpdate(BaseModel):
     title: str
     description: str
 
+
+class TicketStatusUpdate(BaseModel):
+    status: Literal["open","in_progress","closed"]
 
 
 class CustomerResponse(BaseModel):

@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select,func
 from sqlalchemy.orm import selectinload
 from models.user import User
-from schemas.ticket import TicketCreate, TicketUpdate
+from schemas.ticket import TicketCreate, TicketUpdate, TicketStatusUpdate
 
 
 async def get_all_tickets(
@@ -64,7 +64,8 @@ async def create_ticket(db: AsyncSession, ticket_data: TicketCreate):
     ticket = Ticket(
         title=ticket_data.title,
         description=ticket_data.description,
-        customer_id=customer.id
+        customer_id=customer.id,
+        status=ticket_data.status
     )
 
 
@@ -101,10 +102,37 @@ async def update_ticket(db: AsyncSession, ticket_id: int, new_information: Ticke
 
     ticket.description = new_information.description
 
+
     await db.commit()
 
     result = await db.execute(select(Ticket).where(Ticket.id == ticket_id).options(selectinload(Ticket.customer)))
 
     ticket = result.scalar_one()
     return ticket
+
+
+async def update_status_ticket(db: AsyncSession, ticket_id: int, status_data: TicketStatusUpdate):
+    ticket = await db.get(Ticket,ticket_id)
+    if ticket is None:
+        return None
+
+    ticket.status = status_data.status
+
+    await db.commit()
+
+    result = await db.execute(select(Ticket).where(Ticket.id == ticket_id).options(selectinload(Ticket.customer)))
+
+    ticket = result.scalar_one()
+    return ticket
+
+
+async def get_tickets_counts_by_status(db: AsyncSession):
+    tickets = select(
+        Ticket.status,
+        func.count(Ticket.id).label("ticket_count")).group_by(Ticket.status)
+
+    result = await db.execute(tickets)
+
+    return [dict(row._mapping) for row in result.all()]
+
 

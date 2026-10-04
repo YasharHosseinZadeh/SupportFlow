@@ -46,10 +46,10 @@ async def get_current_user(
 
 
 
-def require_role(required_role:str):
-    async def role_cheker(current_user = Depends(get_current_user)):
+def require_role(*required_roles:str):
+    async def role_checker(current_user = Depends(get_current_user)):
 
-        if current_user.role != required_role:
+        if current_user.role not in  required_roles:
             raise HTTPException(status_code=403, detail="Incorrect role")
 
-    return role_cheker
+    return role_checker

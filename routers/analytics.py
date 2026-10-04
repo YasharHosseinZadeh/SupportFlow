@@ -3,7 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from dependencies import get_db
 from services.ticket_service import (
     get_tickets_counts_by_customer,
-    get_total_ticket_count as get_total_ticket_count_service)
+    get_total_ticket_count as get_total_ticket_count_service,
+    get_tickets_counts_by_status as get_tickets_counts_by_status_service)
 
 router = APIRouter()
 
@@ -18,4 +19,11 @@ async def get_customer_tickets(db: AsyncSession = Depends(get_db)):
 @router.get("/analytics/tickets/total")
 async def get_total_ticket_count(db: AsyncSession = Depends(get_db)):
     ticket_count = await get_total_ticket_count_service(db)
+    return ticket_count
+
+
+# Get all status ticket
+@router.get("/analytics/tickets/status")
+async def get_ticket_counts_by_status(db: AsyncSession = Depends(get_db)):
+    ticket_count = await get_tickets_counts_by_status_service(db)
     return ticket_count

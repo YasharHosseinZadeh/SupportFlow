@@ -1,4 +1,4 @@
-from sqlalchemy import String,ForeignKey
+from sqlalchemy import String,ForeignKey,Enum
 from sqlalchemy.orm import relationship,Mapped,mapped_column
 from database import Base
 from typing import TYPE_CHECKING
@@ -22,3 +22,8 @@ class Ticket(Base):
     customer : Mapped["User"] = relationship(back_populates = "tickets" )
 
     comments : Mapped[list["Comment"]] = relationship(back_populates = "ticket" )
+
+    status : Mapped[str] = mapped_column(
+    Enum( "open" , "in_progress" ,"closed"),
+        default= "open"
+    )
