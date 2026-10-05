@@ -18,7 +18,11 @@ router = APIRouter()
 
 # creat a comment
 @router.post("/tickets/{ticket_id}/comments",response_model=CommentResponse)
-async def create_comment(ticket_id : int,comment_info : CommentCreate , db : AsyncSession = Depends(get_db)):
+async def create_comment(
+        ticket_id : int,
+        comment_info : CommentCreate ,
+        db : AsyncSession = Depends(get_db)
+):
 
     result = await create_comment_service(db, ticket_id,comment_info)
 

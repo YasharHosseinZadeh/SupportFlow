@@ -47,6 +47,16 @@ def test_create_comment_wrong_author_id(test_ticket):
     assert response.json() == {"detail" : "User or Ticket not found"}
 
 
+def test_create_comment_missing_content(test_ticket,test_user):
+    response = client.post(
+        f"/tickets/{test_ticket.id}/comments",
+        json={
+            "author_id": test_user.id
+        }
+    )
+    assert response.status_code == 422
+
+
 
 # Get
 def test_get_comments_by_ticket_id(test_ticket,test_user):
