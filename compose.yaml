@@ -1,0 +1,12 @@
+services:
+  supportflow:
+    build: .
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - supportflow_data:/data
+
+volumes:
+  supportflow_data:
