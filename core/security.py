@@ -1,9 +1,12 @@
 from pwdlib import PasswordHash
 import jwt
 from datetime import datetime, timedelta,timezone
+from dotenv import load_dotenv
+import os
 
 password_hash = PasswordHash.recommended()
-SECRET_KEY = "Azxderftghit_15789643_EDRhetishloop"
+load_dotenv()
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 def hash_password(password: str):
     return password_hash.hash(password)
