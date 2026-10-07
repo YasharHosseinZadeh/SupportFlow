@@ -28,3 +28,4 @@ websockets==17.1
 PyJWT
 pytest
 pytest-asyncio
+httpx2
