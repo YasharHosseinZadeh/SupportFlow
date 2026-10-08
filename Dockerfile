@@ -6,5 +6,4 @@ COPY . .
 
 RUN pip install -r requirements.txt
 
-CMD ["uvicorn","main:app","--host","0.0.0.0"]
-
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port $PORT"]
