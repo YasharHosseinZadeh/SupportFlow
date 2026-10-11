@@ -23,7 +23,12 @@ class Ticket(Base):
 
     comments : Mapped[list["Comment"]] = relationship(back_populates = "ticket" )
 
-    status : Mapped[str] = mapped_column(
-    Enum( "open" , "in_progress" ,"closed"),
-        default= "open"
+    status: Mapped[str] = mapped_column(
+        Enum(
+            "open",
+            "in_progress",
+            "closed",
+            name="TicketStatus",
+        ),
+        default="open",
     )

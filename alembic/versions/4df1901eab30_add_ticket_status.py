@@ -35,10 +35,10 @@ def upgrade() -> None:
     sa.Column('title', sa.String(length=100), nullable=False),
     sa.Column('description', sa.String(length=500), nullable=False),
     sa.Column('customer_id', sa.Integer(), nullable=False),
-    sa.Column('status', sa.Enum('open', 'in_progress', 'closed'), nullable=False),
-    sa.ForeignKeyConstraint(['customer_id'], ['users.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
+    sa.Column(
+    'status',
+    sa.Enum('open','in_progress','closed',name='TicketStatus'),nullable=False),
+    sa.ForeignKeyConstraint(['customer_id'], ['users.id'], ),sa.PrimaryKeyConstraint('id'))
     op.create_table('comments',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('content', sa.String(length=255), nullable=False),
