@@ -29,3 +29,6 @@ PyJWT
 pytest
 pytest-asyncio
 httpx2
+asyncpg
+psycopg[binary]
+alembic==1.20.0
