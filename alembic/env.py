@@ -5,8 +5,9 @@ from models.ticket import Ticket
 from models.comment import Comment
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
-
 from alembic import context
+import os
+from sqlalchemy import make_url
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -22,6 +23,28 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 target_metadata = Base.metadata
+
+
+def get_database_url():
+    url = os.getenv(
+        "DATABASE_URL",
+        config.get_main_option("sqlalchemy.url")
+    )
+
+    if url.startswith("postgresql://"):
+        url = url.replace(
+            "postgresql://",
+            "postgresql+psycopg://",
+            1
+        )
+    elif url.startswith("postgres://"):
+        url = url.replace(
+            "postgres://",
+            "postgresql+psycopg://",
+            1
+        )
+
+    return url
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -41,7 +64,8 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
+    url = get_database_url()
+
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -60,8 +84,22 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
+    url = get_database_url()
+
+    if url.startswith("sqlite+aiosqlite://"):
+        url = url.replace("sqlite+aiosqlite://", "sqlite://", 1)
+    elif url.startswith("postgresql+asyncpg://"):
+        url = url.replace("postgresql+asyncpg://", "postgresql+psycopg://", 1)
+    elif url.startswith("postgresql://"):
+        url = url.replace("postgresql://", "postgresql+psycopg://", 1)
+    elif url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql+psycopg://", 1)
+
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        {
+            **config.get_section(config.config_ini_section, {}),
+            "sqlalchemy.url": url,
+        },
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
